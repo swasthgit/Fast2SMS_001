@@ -1,0 +1,151 @@
+{% extends "base.html" %}
+
+{% block title %}Results - Fast2SMS Bulk Sender{% endblock %}
+
+{% block content %}
+<div class="hero hero-success">
+    <h1>🎉 SMS Sending Complete!</h1>
+    <p class="subtitle">Your bulk SMS job has been processed</p>
+</div>
+
+<div class="card">
+    <div class="card-header">
+        <h2>📊 Final Report</h2>
+    </div>
+    <div class="card-body">
+        <div class="stats-grid">
+            <div class="stat-item stat-info">
+                <div class="stat-value">{{ total }}</div>
+                <div class="stat-label">Total Attempted</div>
+            </div>
+            <div class="stat-item stat-success">
+                <div class="stat-value">{{ success_count }}</div>
+                <div class="stat-label">Successful ({{ "%.1f"|format(success_count/total*100) }}%)</div>
+            </div>
+            <div class="stat-item {% if fail_count > 0 %}stat-error{% else %}stat-success{% endif %}">
+                <div class="stat-value">{{ fail_count }}</div>
+                <div class="stat-label">Failed ({{ "%.1f"|format(fail_count/total*100) }}%)</div>
+            </div>
+            <div class="stat-item stat-info">
+                <div class="stat-value">{{ "%.2f"|format(duration) }}s</div>
+                <div class="stat-label">Time Taken</div>
+            </div>
+        </div>
+
+        <div class="progress-bar-container">
+            <div class="progress-bar">
+                <div class="progress-fill" style="width: {{ success_count/total*100 }}%"></div>
+            </div>
+            <p class="progress-text">Success Rate: {{ "%.1f"|format(success_count/total*100) }}%</p>
+        </div>
+    </div>
+</div>
+
+{% if fail_count > 0 %}
+<div class="card card-warning">
+    <div class="card-header">
+        <h2>⚠️ Some Messages Failed</h2>
+    </div>
+    <div class="card-body">
+        <p><strong>{{ fail_count }}</strong> messages failed to send. Common reasons:</p>
+        <ul class="error-list">
+            <li>Invalid mobile numbers (incorrect format or non-existent)</li>
+            <li>Insufficient API balance in your Fast2SMS account</li>
+            <li>Invalid template ID or DLT mismatch</li>
+            <li>Network errors or API timeouts</li>
+            <li>Rate limiting or blocked sender ID</li>
+        </ul>
+        <p>Check the detailed log file below for specific error messages.</p>
+    </div>
+</div>
+{% else %}
+<div class="card card-success">
+    <div class="card-header">
+        <h2>✅ All Messages Sent Successfully!</h2>
+    </div>
+    <div class="card-body">
+        <p>Congratulations! All {{ success_count }} messages were sent successfully without any errors.</p>
+    </div>
+</div>
+{% endif %}
+
+<div class="card">
+    <div class="card-header">
+        <h2>📋 Results Preview (First 20 Rows)</h2>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="results-table">
+                <thead>
+                    <tr>
+                        <th>Row</th>
+                        <th>Mobile</th>
+                        <th>Template ID</th>
+                        <th>Status</th>
+                        <th>Request ID</th>
+                        <th>Message</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for result in results_preview %}
+                    <tr class="{% if result.status == 'SUCCESS' %}status-success{% else %}status-fail{% endif %}">
+                        <td>{{ result.row }}</td>
+                        <td>{{ result.mobile }}</td>
+                        <td><span class="badge">{{ result.template_id }}</span></td>
+                        <td>
+                            <span class="status-badge status-{{ result.status|lower }}">
+                                {% if result.status == 'SUCCESS' %}✅{% else %}❌{% endif %}
+                                {{ result.status }}
+                            </span>
+                        </td>
+                        <td class="request-id">{{ result.request_id }}</td>
+                        <td>{{ result.message }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% if total > 20 %}
+        <p class="table-note">Showing first 20 of {{ total }} results. Download the full log file for complete details.</p>
+        {% endif %}
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header">
+        <h2>📁 Download Log File</h2>
+    </div>
+    <div class="card-body text-center">
+        <p>Download the complete log file with all results for your records</p>
+        <a href="{{ url_for('download_log', filename=log_filename) }}" class="btn btn-success">
+            📥 Download Excel Log ({{ log_filename }})
+        </a>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header">
+        <h2>🔄 What's Next?</h2>
+    </div>
+    <div class="card-body">
+        <div class="next-steps">
+            <div class="next-step-item">
+                <h3>1. Review the Log</h3>
+                <p>Download and review the Excel log file for detailed status of each message</p>
+            </div>
+            <div class="next-step-item">
+                <h3>2. Check Fast2SMS Dashboard</h3>
+                <p>Visit your Fast2SMS dashboard to verify delivery status and remaining balance</p>
+            </div>
+            <div class="next-step-item">
+                <h3>3. Retry Failed Messages</h3>
+                <p>If any messages failed, correct the data and send them again</p>
+            </div>
+        </div>
+        <div class="form-actions">
+            <a href="{{ url_for('index') }}" class="btn btn-primary">Back to Home</a>
+            <a href="{{ url_for('reset') }}" class="btn btn-secondary">Start New Job</a>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,115 @@
+{% extends "base.html" %}
+
+{% block title %}Preview Data - Fast2SMS Bulk Sender{% endblock %}
+
+{% block content %}
+<div class="hero">
+    <h1>👀 Preview Your Data</h1>
+    <p class="subtitle">Review your data before sending SMS messages</p>
+</div>
+
+<div class="card">
+    <div class="card-header">
+        <h2>📊 Data Summary</h2>
+    </div>
+    <div class="card-body">
+        <div class="stats-grid">
+            <div class="stat-item">
+                <div class="stat-value">{{ total_rows }}</div>
+                <div class="stat-label">Total Rows</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value">{{ unique_mobiles }}</div>
+                <div class="stat-label">Unique Mobile Numbers</div>
+            </div>
+            <div class="stat-item {% if invalid_count > 0 %}stat-error{% else %}stat-success{% endif %}">
+                <div class="stat-value">{{ invalid_count }}</div>
+                <div class="stat-label">Invalid Templates</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% if invalid_count > 0 %}
+<div class="card card-warning">
+    <div class="card-header">
+        <h2>⚠️ Invalid Template IDs Detected</h2>
+    </div>
+    <div class="card-body">
+        <p>The following rows have invalid template IDs that don't match any approved template:</p>
+        <ul class="error-list">
+            {% for row_num, template_id in invalid_templates %}
+            <li>Row {{ row_num }}: Template ID "{{ template_id }}" not found</li>
+            {% endfor %}
+            {% if invalid_count > 10 %}
+            <li><em>... and {{ invalid_count - 10 }} more invalid templates</em></li>
+            {% endif %}
+        </ul>
+        <p class="warning-note">⚠️ Messages with invalid template IDs will fail during sending.</p>
+    </div>
+</div>
+{% else %}
+<div class="card card-success">
+    <div class="card-header">
+        <h2>✅ All Template IDs Valid</h2>
+    </div>
+    <div class="card-body">
+        <p>All template IDs in your file match approved templates. You're ready to proceed!</p>
+    </div>
+</div>
+{% endif %}
+
+<div class="card">
+    <div class="card-header">
+        <h2>📋 Data Preview (First 10 Rows)</h2>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="preview-table">
+                <thead>
+                    <tr>
+                        <th>Mobile</th>
+                        <th>v1</th>
+                        <th>v2</th>
+                        <th>v3</th>
+                        <th>v4</th>
+                        <th>v5</th>
+                        <th>v6</th>
+                        <th>Template ID</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for row in preview_data %}
+                    <tr>
+                        <td>{{ row.mobile }}</td>
+                        <td>{{ row.v1 }}</td>
+                        <td>{{ row.v2 }}</td>
+                        <td>{{ row.v3 }}</td>
+                        <td>{{ row.v4 }}</td>
+                        <td>{{ row.v5 }}</td>
+                        <td>{{ row.v6 }}</td>
+                        <td><span class="badge">{{ row.template_id }}</span></td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% if total_rows > 10 %}
+        <p class="table-note">Showing first 10 of {{ total_rows }} rows</p>
+        {% endif %}
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header">
+        <h2>🚀 Ready to Send?</h2>
+    </div>
+    <div class="card-body text-center">
+        <p>If everything looks correct, proceed to configure API settings and send messages.</p>
+        <div class="form-actions">
+            <a href="{{ url_for('send') }}" class="btn btn-primary">Continue to Send</a>
+            <a href="{{ url_for('upload') }}" class="btn btn-secondary">Upload Different File</a>
+        </div>
+    </div>
+</div>
+{% endblock %}
