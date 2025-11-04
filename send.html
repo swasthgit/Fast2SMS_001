@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Send SMS - Fast2SMS Bulk Sender</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="container">
+            <div class="nav-brand">
+                <h1>📱 Fast2SMS Bulk Sender</h1>
+            </div>
+            <div class="nav-links">
+                <a href="index.html">Home</a>
+                <a href="upload.html">Upload Data</a>
+                <a href="#" onclick="downloadSample(); return false;" class="btn-download">Download Sample</a>
+            </div>
+        </div>
+    </nav>
+
+    <main class="container">
+        <div class="hero">
+            <h1>🔐 API Configuration</h1>
+            <p class="subtitle">Enter your Fast2SMS API credentials to send messages</p>
+        </div>
+
+        <div class="card" id="configCard">
+            <div class="card-header">
+                <h2>⚙️ Configure Sending Settings</h2>
+            </div>
+            <div class="card-body">
+                <div class="form-group">
+                    <label for="apiKey">Fast2SMS API Key <span class="required">*</span></label>
+                    <input type="text" id="apiKey" class="form-control" placeholder="Enter your Fast2SMS API key" required>
+                    <small class="form-help">Get your API key from <a href="https://www.fast2sms.com/dashboard" target="_blank">Fast2SMS Dashboard</a></small>
+                </div>
+
+                <div class="form-group">
+                    <label for="scheduleTime">Schedule Time (Optional)</label>
+                    <input type="text" id="scheduleTime" class="form-control" placeholder="YYYY-MM-DD-HH-MM (e.g., 2024-12-25-14-30)">
+                    <small class="form-help">Leave blank to send immediately. Format: Year-Month-Day-Hour-Minute (24-hour format)</small>
+                </div>
+
+                <div class="info-box">
+                    <h3>📊 Sending Summary</h3>
+                    <ul>
+                        <li>Total messages to send: <strong id="totalMessages">0</strong></li>
+                        <li>Unique mobile numbers: <strong id="uniqueNumbers">0</strong></li>
+                        <li>Rate limiting: 0.2 seconds between messages</li>
+                    </ul>
+                </div>
+
+                <div class="warning-box">
+                    <h3>⚠️ Important Warnings</h3>
+                    <ul>
+                        <li>This action cannot be undone once started</li>
+                        <li>Ensure you have sufficient balance in your Fast2SMS account</li>
+                        <li>Invalid mobile numbers or template IDs will fail</li>
+                        <li>Messages will be charged according to your Fast2SMS plan</li>
+                        <li>Keep this tab open while sending is in progress</li>
+                    </ul>
+                </div>
+
+                <div class="form-actions">
+                    <button id="sendBtn" class="btn btn-primary">🚀 Start Sending SMS</button>
+                    <a href="upload.html" class="btn btn-secondary">Back to Upload</a>
+                </div>
+            </div>
+        </div>
+
+        <div class="card" id="progressCard" style="display: none;">
+            <div class="card-header">
+                <h2>📤 Sending Progress</h2>
+            </div>
+            <div class="card-body">
+                <div class="progress-bar-container">
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="progressFill" style="width: 0%"></div>
+                    </div>
+                    <p class="progress-text" id="progressText">0 / 0 messages sent</p>
+                </div>
+
+                <div class="stats-grid" style="margin-top: 2rem;">
+                    <div class="stat-item stat-info">
+                        <div class="stat-value" id="processedCount">0</div>
+                        <div class="stat-label">Processed</div>
+                    </div>
+                    <div class="stat-item stat-success">
+                        <div class="stat-value" id="successCount">0</div>
+                        <div class="stat-label">Successful</div>
+                    </div>
+                    <div class="stat-item stat-error">
+                        <div class="stat-value" id="failedCount">0</div>
+                        <div class="stat-label">Failed</div>
+                    </div>
+                </div>
+
+                <div class="live-log">
+                    <h3>Live Log</h3>
+                    <div id="liveLog" class="log-container"></div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer>
+        <div class="container">
+            <p>Created for M-SWASTH Team | Fast2SMS Bulk Sender v3.0 (Static)</p>
+        </div>
+    </footer>
+
+    <script src="js/templates.js"></script>
+    <script src="js/utils.js"></script>
+    <script src="js/sms.js"></script>
+    <script>
+        let smsData = null;
+
+        document.addEventListener('DOMContentLoaded', function() {
+            loadData();
+            setupSendButton();
+        });
+
+        function loadData() {
+            smsData = loadFromStorage('sms_data');
+
+            if (!smsData || smsData.length === 0) {
+                showToast('No data found. Please upload a CSV file first.', 'error');
+                setTimeout(() => {
+                    window.location.href = 'upload.html';
+                }, 2000);
+                return;
+            }
+
+            // Update summary
+            document.getElementById('totalMessages').textContent = smsData.length;
+            const uniqueCount = new Set(smsData.map(r => r.mobile)).size;
+            document.getElementById('uniqueNumbers').textContent = uniqueCount;
+        }
+
+        function setupSendButton() {
+            const sendBtn = document.getElementById('sendBtn');
+            sendBtn.addEventListener('click', startSending);
+        }
+
+        async function startSending() {
+            const apiKey = document.getElementById('apiKey').value.trim();
+            const scheduleTime = document.getElementById('scheduleTime').value.trim();
+
+            if (!apiKey) {
+                showToast('Please enter your Fast2SMS API key', 'error');
+                return;
+            }
+
+            // Confirm before sending
+            const confirmMsg = `⚠️ Are you sure you want to send SMS to ${smsData.length} numbers?\n\nThis action cannot be undone and will use your Fast2SMS credits.`;
+            if (!confirm(confirmMsg)) {
+                return;
+            }
+
+            // Hide config, show progress
+            document.getElementById('configCard').style.display = 'none';
+            document.getElementById('progressCard').style.display = 'block';
+
+            // Start sending
+            try {
+                const result = await sendBulkSMS(smsData, apiKey, scheduleTime, updateProgress);
+
+                // Save results
+                saveToStorage('sms_results', result);
+
+                // Redirect to results page
+                showToast('Sending complete! Redirecting to results...', 'success');
+                setTimeout(() => {
+                    window.location.href = 'results.html';
+                }, 2000);
+
+            } catch (error) {
+                showToast('Error during sending: ' + error.message, 'error');
+                console.error(error);
+            }
+        }
+
+        function updateProgress(current, total, status, mobile) {
+            const progressFill = document.getElementById('progressFill');
+            const progressText = document.getElementById('progressText');
+            const processedCount = document.getElementById('processedCount');
+            const successCount = document.getElementById('successCount');
+            const failedCount = document.getElementById('failedCount');
+            const liveLog = document.getElementById('liveLog');
+
+            // Update progress bar
+            const percentage = (current / total) * 100;
+            progressFill.style.width = percentage + '%';
+            progressText.textContent = `${current} / ${total} messages sent`;
+
+            // Update counters
+            processedCount.textContent = current;
+
+            const currentSuccess = parseInt(successCount.textContent);
+            const currentFailed = parseInt(failedCount.textContent);
+
+            if (status === 'SUCCESS') {
+                successCount.textContent = currentSuccess + 1;
+            } else {
+                failedCount.textContent = currentFailed + 1;
+            }
+
+            // Add to live log
+            const logEntry = document.createElement('div');
+            logEntry.className = `log-entry log-${status.toLowerCase()}`;
+            logEntry.textContent = `[${current}/${total}] ${status} - ${mobile}`;
+            liveLog.appendChild(logEntry);
+
+            // Auto-scroll to bottom
+            liveLog.scrollTop = liveLog.scrollHeight;
+        }
+
+        function downloadSample() {
+            const csv = generateSampleCSV();
+            downloadFile(csv, 'sample_sms_data.csv', 'text/csv');
+            showToast('Sample CSV file downloaded!', 'success');
+        }
+
+        // Prevent page close during sending
+        window.addEventListener('beforeunload', function (e) {
+            const progressCard = document.getElementById('progressCard');
+            if (progressCard.style.display !== 'none') {
+                e.preventDefault();
+                e.returnValue = 'SMS sending is in progress. Are you sure you want to leave?';
+                return e.returnValue;
+            }
+        });
+    </script>
+</body>
+</html>

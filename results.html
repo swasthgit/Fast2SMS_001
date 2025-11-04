@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Results - Fast2SMS Bulk Sender</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="container">
+            <div class="nav-brand">
+                <h1>📱 Fast2SMS Bulk Sender</h1>
+            </div>
+            <div class="nav-links">
+                <a href="index.html">Home</a>
+                <a href="upload.html">Upload Data</a>
+                <a href="#" onclick="downloadSample(); return false;" class="btn-download">Download Sample</a>
+            </div>
+        </div>
+    </nav>
+
+    <main class="container">
+        <div class="hero hero-success">
+            <h1>🎉 SMS Sending Complete!</h1>
+            <p class="subtitle">Your bulk SMS job has been processed</p>
+        </div>
+
+        <div class="card">
+            <div class="card-header">
+                <h2>📊 Final Report</h2>
+            </div>
+            <div class="card-body">
+                <div class="stats-grid">
+                    <div class="stat-item stat-info">
+                        <div class="stat-value" id="totalAttempted">0</div>
+                        <div class="stat-label">Total Attempted</div>
+                    </div>
+                    <div class="stat-item stat-success">
+                        <div class="stat-value" id="successTotal">0</div>
+                        <div class="stat-label">Successful (<span id="successPercent">0</span>%)</div>
+                    </div>
+                    <div class="stat-item stat-error">
+                        <div class="stat-value" id="failedTotal">0</div>
+                        <div class="stat-label">Failed (<span id="failedPercent">0</span>%)</div>
+                    </div>
+                    <div class="stat-item stat-info">
+                        <div class="stat-value" id="timeTaken">0s</div>
+                        <div class="stat-label">Time Taken</div>
+                    </div>
+                </div>
+
+                <div class="progress-bar-container">
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="successProgress" style="width: 0%"></div>
+                    </div>
+                    <p class="progress-text">Success Rate: <span id="successRateText">0</span>%</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="card" id="failureCard" style="display: none;">
+            <div class="card-header">
+                <h2>⚠️ Some Messages Failed</h2>
+            </div>
+            <div class="card-body">
+                <p id="failureMessage"></p>
+                <h4>Common failure reasons:</h4>
+                <ul class="error-list">
+                    <li>Invalid mobile numbers (incorrect format or non-existent)</li>
+                    <li>Insufficient API balance in your Fast2SMS account</li>
+                    <li>Invalid template ID or DLT mismatch</li>
+                    <li>Network errors or API timeouts</li>
+                    <li>Rate limiting or blocked sender ID</li>
+                </ul>
+                <p>Check the detailed log below for specific error messages.</p>
+            </div>
+        </div>
+
+        <div class="card" id="successCard" style="display: none;">
+            <div class="card-header">
+                <h2>✅ All Messages Sent Successfully!</h2>
+            </div>
+            <div class="card-body">
+                <p id="successMessage"></p>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header">
+                <h2>📋 Results Details</h2>
+            </div>
+            <div class="card-body">
+                <input type="text" id="searchResults" class="form-control" placeholder="Search results..." style="margin-bottom: 1rem;">
+
+                <div class="filter-buttons" style="margin-bottom: 1rem;">
+                    <button class="btn btn-small" onclick="filterResults('all')">All</button>
+                    <button class="btn btn-small btn-success" onclick="filterResults('success')">Success Only</button>
+                    <button class="btn btn-small btn-danger" onclick="filterResults('fail')">Failed Only</button>
+                </div>
+
+                <div class="table-responsive">
+                    <table class="results-table" id="resultsTable">
+                        <thead>
+                            <tr>
+                                <th>Row</th>
+                                <th>Mobile</th>
+                                <th>Template ID</th>
+                                <th>Status</th>
+                                <th>Request ID</th>
+                                <th>Message</th>
+                            </tr>
+                        </thead>
+                        <tbody id="resultsBody">
+                            <!-- Results will be loaded here -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header">
+                <h2>📁 Download Results</h2>
+            </div>
+            <div class="card-body text-center">
+                <p>Download the complete log file with all results for your records</p>
+                <button onclick="downloadResults()" class="btn btn-success">📥 Download Excel Log (CSV)</button>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header">
+                <h2>🔄 What's Next?</h2>
+            </div>
+            <div class="card-body">
+                <div class="next-steps">
+                    <div class="next-step-item">
+                        <h3>1. Review the Results</h3>
+                        <p>Download the log file above for detailed status of each message</p>
+                    </div>
+                    <div class="next-step-item">
+                        <h3>2. Check Fast2SMS Dashboard</h3>
+                        <p>Visit your Fast2SMS dashboard to verify delivery status and remaining balance</p>
+                    </div>
+                    <div class="next-step-item">
+                        <h3>3. Retry Failed Messages</h3>
+                        <p>If any messages failed, correct the data and send them again</p>
+                    </div>
+                </div>
+                <div class="form-actions">
+                    <a href="index.html" class="btn btn-primary">Back to Home</a>
+                    <a href="upload.html" class="btn btn-secondary">Start New Job</a>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer>
+        <div class="container">
+            <p>Created for M-SWASTH Team | Fast2SMS Bulk Sender v3.0 (Static)</p>
+        </div>
+    </footer>
+
+    <script src="js/templates.js"></script>
+    <script src="js/utils.js"></script>
+    <script>
+        let resultsData = null;
+        let allResults = [];
+
+        document.addEventListener('DOMContentLoaded', function() {
+            loadResults();
+            setupSearch();
+        });
+
+        function loadResults() {
+            resultsData = loadFromStorage('sms_results');
+
+            if (!resultsData || !resultsData.results) {
+                showToast('No results found', 'error');
+                setTimeout(() => {
+                    window.location.href = 'index.html';
+                }, 2000);
+                return;
+            }
+
+            allResults = resultsData.results;
+            displaySummary();
+            displayResults(allResults);
+        }
+
+        function displaySummary() {
+            const { total, success, failed, duration } = resultsData;
+
+            document.getElementById('totalAttempted').textContent = total;
+            document.getElementById('successTotal').textContent = success;
+            document.getElementById('failedTotal').textContent = failed;
+            document.getElementById('timeTaken').textContent = duration.toFixed(2) + 's';
+
+            const successPercent = ((success / total) * 100).toFixed(1);
+            const failedPercent = ((failed / total) * 100).toFixed(1);
+
+            document.getElementById('successPercent').textContent = successPercent;
+            document.getElementById('failedPercent').textContent = failedPercent;
+            document.getElementById('successRateText').textContent = successPercent;
+
+            // Animate progress bar
+            setTimeout(() => {
+                document.getElementById('successProgress').style.width = successPercent + '%';
+            }, 300);
+
+            // Show appropriate message card
+            if (failed > 0) {
+                const failureCard = document.getElementById('failureCard');
+                const failureMessage = document.getElementById('failureMessage');
+                failureCard.style.display = 'block';
+                failureMessage.textContent = `${failed} out of ${total} messages failed to send.`;
+            } else {
+                const successCard = document.getElementById('successCard');
+                const successMessage = document.getElementById('successMessage');
+                successCard.style.display = 'block';
+                successMessage.textContent = `Congratulations! All ${success} messages were sent successfully without any errors.`;
+            }
+        }
+
+        function displayResults(results) {
+            const tbody = document.getElementById('resultsBody');
+            tbody.innerHTML = '';
+
+            results.forEach(result => {
+                const tr = document.createElement('tr');
+                tr.className = result.status === 'SUCCESS' ? 'status-success' : 'status-fail';
+                tr.innerHTML = `
+                    <td>${result.row}</td>
+                    <td>${result.mobile}</td>
+                    <td><span class="badge">${result.template_id}</span></td>
+                    <td>
+                        <span class="status-badge status-${result.status.toLowerCase()}">
+                            ${result.status === 'SUCCESS' ? '✅' : '❌'} ${result.status}
+                        </span>
+                    </td>
+                    <td class="request-id">${result.request_id || 'N/A'}</td>
+                    <td>${result.message}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function setupSearch() {
+            const searchInput = document.getElementById('searchResults');
+            searchInput.addEventListener('keyup', function() {
+                const searchTerm = this.value.toLowerCase();
+                const rows = document.querySelectorAll('#resultsTable tbody tr');
+
+                rows.forEach(row => {
+                    const text = row.textContent.toLowerCase();
+                    row.style.display = text.includes(searchTerm) ? '' : 'none';
+                });
+            });
+        }
+
+        function filterResults(filter) {
+            const rows = document.querySelectorAll('#resultsTable tbody tr');
+
+            rows.forEach(row => {
+                if (filter === 'all') {
+                    row.style.display = '';
+                } else if (filter === 'success') {
+                    row.style.display = row.classList.contains('status-success') ? '' : 'none';
+                } else if (filter === 'fail') {
+                    row.style.display = row.classList.contains('status-fail') ? '' : 'none';
+                }
+            });
+        }
+
+        function downloadResults() {
+            const timestamp = formatTimestamp();
+            const filename = `sms_log_${timestamp}.csv`;
+            exportToExcel(allResults, filename);
+            showToast('Results downloaded successfully!', 'success');
+        }
+
+        function downloadSample() {
+            const csv = generateSampleCSV();
+            downloadFile(csv, 'sample_sms_data.csv', 'text/csv');
+            showToast('Sample CSV file downloaded!', 'success');
+        }
+    </script>
+</body>
+</html>
