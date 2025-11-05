@@ -1,41 +1,19 @@
 # 🚀 Quick Start Guide
 
-Get up and running with Fast2SMS Bulk Sender in 3 minutes!
+Get up and running with Fast2SMS Bulk Sender in 1 minute!
 
-## Step 1: Install Dependencies
+## Step 1: Open the App
 
-### Windows:
-```cmd
-cd fast2sms_webapp
-run.bat
-```
+### Option A: Open Locally (Instant!)
+1. Download or clone this repository
+2. **Double-click `index.html`** or **right-click → Open with → Your Browser**
+3. That's it! No installation needed! 🎉
 
-### Linux/Mac:
-```bash
-cd fast2sms_webapp
-./run.sh
-```
+### Option B: Use GitHub Pages (Hosted)
+1. Visit your deployed site: `https://yourusername.github.io/Fast2SMS_001`
+2. Or enable GitHub Pages in repository Settings
 
-Or manually:
-```bash
-# Create virtual environment
-python -m venv venv
-
-# Activate it
-source venv/bin/activate  # Linux/Mac
-# OR
-venv\Scripts\activate     # Windows
-
-# Install dependencies
-pip install -r requirements.txt
-
-# Run the app
-python app.py
-```
-
-## Step 2: Open Browser
-
-Visit: **http://localhost:5000**
+## Step 2: You're Ready!
 
 ## Step 3: Send SMS
 

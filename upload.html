@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Upload Data - Fast2SMS Bulk Sender</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="container">
+            <div class="nav-brand">
+                <h1>📱 Fast2SMS Bulk Sender</h1>
+            </div>
+            <div class="nav-links">
+                <a href="index.html">Home</a>
+                <a href="upload.html" class="active">Upload Data</a>
+                <a href="#" onclick="downloadSample(); return false;" class="btn-download">Download Sample</a>
+            </div>
+        </div>
+    </nav>
+
+    <main class="container">
+        <div class="hero">
+            <h1>📂 Upload Your Data File</h1>
+            <p class="subtitle">Upload a CSV file with your SMS data</p>
+        </div>
+
+        <div class="card">
+            <div class="card-header">
+                <h2>📤 File Upload</h2>
+            </div>
+            <div class="card-body">
+                <div class="file-upload-wrapper" id="dropZone">
+                    <input type="file" id="fileInput" accept=".csv" style="display: none;">
+                    <label for="fileInput" class="file-upload-label">
+                        <div class="upload-icon">📁</div>
+                        <div class="upload-text">
+                            <span class="upload-title">Click to select CSV file</span>
+                            <span class="upload-subtitle">or drag and drop here</span>
+                            <span class="upload-formats">Supported: CSV files only</span>
+                        </div>
+                    </label>
+                    <div class="file-name" id="fileName" style="display: none;"></div>
+                </div>
+                <div class="form-actions">
+                    <button id="uploadBtn" class="btn btn-primary" disabled>Upload & Continue</button>
+                    <a href="index.html" class="btn btn-secondary">Cancel</a>
+                </div>
+            </div>
+        </div>
+
+        <div class="card" id="previewCard" style="display: none;">
+            <div class="card-header">
+                <h2>👀 Data Preview</h2>
+            </div>
+            <div class="card-body">
+                <div class="stats-grid">
+                    <div class="stat-item">
+                        <div class="stat-value" id="totalRows">0</div>
+                        <div class="stat-label">Total Rows</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value" id="uniqueMobiles">0</div>
+                        <div class="stat-label">Unique Mobile Numbers</div>
+                    </div>
+                    <div class="stat-item" id="invalidStat">
+                        <div class="stat-value" id="invalidCount">0</div>
+                        <div class="stat-label">Invalid Entries</div>
+                    </div>
+                </div>
+
+                <div id="validationErrors" style="display: none;" class="warning-box">
+                    <h3>⚠️ Validation Issues</h3>
+                    <ul id="errorList"></ul>
+                </div>
+
+                <h3>Preview (First 10 Rows)</h3>
+                <div class="table-responsive">
+                    <table class="preview-table">
+                        <thead>
+                            <tr>
+                                <th>Row</th>
+                                <th>Mobile</th>
+                                <th>v1</th>
+                                <th>v2</th>
+                                <th>v3</th>
+                                <th>v4</th>
+                                <th>v5</th>
+                                <th>v6</th>
+                                <th>Template ID</th>
+                            </tr>
+                        </thead>
+                        <tbody id="previewBody"></tbody>
+                    </table>
+                </div>
+
+                <div class="form-actions">
+                    <button id="continueBtn" class="btn btn-primary">Continue to Send</button>
+                    <button id="resetBtn" class="btn btn-secondary">Upload Different File</button>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer>
+        <div class="container">
+            <p>Created for M-SWASTH Team | Fast2SMS Bulk Sender v3.0 (Static)</p>
+        </div>
+    </footer>
+
+    <script src="js/templates.js"></script>
+    <script src="js/utils.js"></script>
+    <script>
+        let uploadedData = null;
+
+        document.addEventListener('DOMContentLoaded', function() {
+            setupFileUpload();
+            setupDragDrop();
+        });
+
+        function setupFileUpload() {
+            const fileInput = document.getElementById('fileInput');
+            const uploadBtn = document.getElementById('uploadBtn');
+            const continueBtn = document.getElementById('continueBtn');
+            const resetBtn = document.getElementById('resetBtn');
+
+            fileInput.addEventListener('change', handleFileSelect);
+            uploadBtn.addEventListener('click', processFile);
+            continueBtn.addEventListener('click', proceedToSend);
+            resetBtn.addEventListener('click', resetUpload);
+        }
+
+        function setupDragDrop() {
+            const dropZone = document.getElementById('dropZone');
+
+            dropZone.addEventListener('dragover', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                dropZone.classList.add('drag-over');
+            });
+
+            dropZone.addEventListener('dragleave', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                dropZone.classList.remove('drag-over');
+            });
+
+            dropZone.addEventListener('drop', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                dropZone.classList.remove('drag-over');
+
+                const files = e.dataTransfer.files;
+                if (files.length > 0) {
+                    document.getElementById('fileInput').files = files;
+                    handleFileSelect({ target: { files: files } });
+                }
+            });
+        }
+
+        function handleFileSelect(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            const fileName = document.getElementById('fileName');
+            const uploadBtn = document.getElementById('uploadBtn');
+
+            fileName.textContent = `Selected: ${file.name} (${(file.size / 1024).toFixed(2)} KB)`;
+            fileName.style.display = 'block';
+            uploadBtn.disabled = false;
+        }
+
+        function processFile() {
+            const fileInput = document.getElementById('fileInput');
+            const file = fileInput.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const text = e.target.result;
+                    const data = parseCSV(text);
+
+                    if (data.length === 0) {
+                        showToast('CSV file is empty', 'error');
+                        return;
+                    }
+
+                    // Validate data
+                    const validation = validateData(data);
+                    uploadedData = data;
+
+                    // Display preview
+                    displayPreview(data, validation);
+
+                    // Save to localStorage
+                    saveToStorage('sms_data', data);
+
+                    showToast('File processed successfully!', 'success');
+                } catch (error) {
+                    showToast('Error processing file: ' + error.message, 'error');
+                }
+            };
+
+            reader.readAsText(file);
+        }
+
+        function validateData(data) {
+            const errors = [];
+            const invalidRows = [];
+
+            data.forEach((row, index) => {
+                const rowNum = index + 1;
+
+                // Check required columns
+                if (!row.mobile) {
+                    errors.push(`Row ${rowNum}: Missing mobile number`);
+                    invalidRows.push(rowNum);
+                } else if (!isValidMobile(row.mobile)) {
+                    errors.push(`Row ${rowNum}: Invalid mobile number (${row.mobile})`);
+                    invalidRows.push(rowNum);
+                }
+
+                if (!row.template_id) {
+                    errors.push(`Row ${rowNum}: Missing template ID`);
+                    invalidRows.push(rowNum);
+                } else if (!isValidTemplateId(row.template_id)) {
+                    errors.push(`Row ${rowNum}: Invalid template ID (${row.template_id})`);
+                    invalidRows.push(rowNum);
+                }
+            });
+
+            return {
+                isValid: errors.length === 0,
+                errors: errors,
+                invalidRows: invalidRows
+            };
+        }
+
+        function displayPreview(data, validation) {
+            const previewCard = document.getElementById('previewCard');
+            const totalRows = document.getElementById('totalRows');
+            const uniqueMobiles = document.getElementById('uniqueMobiles');
+            const invalidCount = document.getElementById('invalidCount');
+            const invalidStat = document.getElementById('invalidStat');
+            const validationErrors = document.getElementById('validationErrors');
+            const errorList = document.getElementById('errorList');
+            const previewBody = document.getElementById('previewBody');
+
+            // Update stats
+            totalRows.textContent = data.length;
+            const uniqueCount = new Set(data.map(r => r.mobile)).size;
+            uniqueMobiles.textContent = uniqueCount;
+            invalidCount.textContent = validation.errors.length;
+
+            // Update stat styling
+            if (validation.errors.length > 0) {
+                invalidStat.classList.add('stat-error');
+            } else {
+                invalidStat.classList.add('stat-success');
+            }
+
+            // Show validation errors if any
+            if (validation.errors.length > 0) {
+                validationErrors.style.display = 'block';
+                errorList.innerHTML = '';
+                validation.errors.slice(0, 10).forEach(error => {
+                    const li = document.createElement('li');
+                    li.textContent = error;
+                    errorList.appendChild(li);
+                });
+                if (validation.errors.length > 10) {
+                    const li = document.createElement('li');
+                    li.textContent = `... and ${validation.errors.length - 10} more errors`;
+                    errorList.appendChild(li);
+                }
+            }
+
+            // Display preview rows
+            previewBody.innerHTML = '';
+            data.slice(0, 10).forEach((row, index) => {
+                const tr = document.createElement('tr');
+                const isInvalid = validation.invalidRows.includes(index + 1);
+                if (isInvalid) {
+                    tr.classList.add('invalid-row');
+                }
+                tr.innerHTML = `
+                    <td>${index + 1}</td>
+                    <td>${row.mobile || ''}</td>
+                    <td>${row.v1 || ''}</td>
+                    <td>${row.v2 || ''}</td>
+                    <td>${row.v3 || ''}</td>
+                    <td>${row.v4 || ''}</td>
+                    <td>${row.v5 || ''}</td>
+                    <td>${row.v6 || ''}</td>
+                    <td><span class="badge">${row.template_id || ''}</span></td>
+                `;
+                previewBody.appendChild(tr);
+            });
+
+            previewCard.style.display = 'block';
+            previewCard.scrollIntoView({ behavior: 'smooth' });
+        }
+
+        function proceedToSend() {
+            if (uploadedData) {
+                saveToStorage('sms_data', uploadedData);
+                window.location.href = 'send.html';
+            }
+        }
+
+        function resetUpload() {
+            document.getElementById('fileInput').value = '';
+            document.getElementById('fileName').style.display = 'none';
+            document.getElementById('uploadBtn').disabled = true;
+            document.getElementById('previewCard').style.display = 'none';
+            uploadedData = null;
+            clearStorage('sms_data');
+        }
+
+        function downloadSample() {
+            const csv = generateSampleCSV();
+            downloadFile(csv, 'sample_sms_data.csv', 'text/csv');
+            showToast('Sample CSV file downloaded!', 'success');
+        }
+    </script>
+</body>
+</html>

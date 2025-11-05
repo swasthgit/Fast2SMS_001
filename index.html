@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fast2SMS Bulk Sender - Home</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="container">
+            <div class="nav-brand">
+                <h1>📱 Fast2SMS Bulk Sender</h1>
+            </div>
+            <div class="nav-links">
+                <a href="index.html" class="active">Home</a>
+                <a href="upload.html">Upload Data</a>
+                <a href="#" onclick="downloadSample(); return false;" class="btn-download">Download Sample</a>
+            </div>
+        </div>
+    </nav>
+
+    <main class="container">
+        <div class="hero">
+            <h1>📋 Fast2SMS Bulk Message Sender</h1>
+            <p class="subtitle">Send bulk SMS messages using Fast2SMS service with multiple templates</p>
+        </div>
+
+        <div class="card">
+            <div class="card-header">
+                <h2>📊 Available SMS Templates</h2>
+                <p>Total Templates: <strong id="templateCount">0</strong></p>
+            </div>
+            <div class="card-body">
+                <input type="text" id="searchInput" class="form-control" placeholder="Search templates..." style="margin-bottom: 1rem;">
+                <div class="table-responsive">
+                    <table class="templates-table" id="templatesTable">
+                        <thead>
+                            <tr>
+                                <th>Template ID</th>
+                                <th>Language</th>
+                                <th>Sender</th>
+                                <th>Variables</th>
+                                <th>DLT ID</th>
+                                <th>Message Preview</th>
+                            </tr>
+                        </thead>
+                        <tbody id="templatesBody">
+                            <!-- Templates will be loaded here -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header">
+                <h2>🚀 Getting Started</h2>
+            </div>
+            <div class="card-body">
+                <div class="steps">
+                    <div class="step">
+                        <div class="step-number">1</div>
+                        <div class="step-content">
+                            <h3>Download Sample File</h3>
+                            <p>Click the "Download Sample" button to get a template CSV file</p>
+                        </div>
+                    </div>
+                    <div class="step">
+                        <div class="step-number">2</div>
+                        <div class="step-content">
+                            <h3>Fill Your Data</h3>
+                            <p>Open the CSV file and fill in your data: mobile numbers, variables (v1-v10), and template IDs</p>
+                        </div>
+                    </div>
+                    <div class="step">
+                        <div class="step-number">3</div>
+                        <div class="step-content">
+                            <h3>Upload & Send</h3>
+                            <p>Upload your filled CSV file, enter your Fast2SMS API key, and send messages</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="cta">
+                    <a href="upload.html" class="btn btn-primary">Start Sending SMS</a>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header">
+                <h2>💡 Important Notes</h2>
+            </div>
+            <div class="card-body">
+                <ul class="info-list">
+                    <li>Mobile numbers should be 10 digits (without +91 prefix)</li>
+                    <li>Only fill the variables (v1, v2, etc.) that your template requires</li>
+                    <li>Template ID must match one from the approved templates list above</li>
+                    <li>Supported file format: CSV</li>
+                    <li>Get your API key from <a href="https://www.fast2sms.com/" target="_blank">Fast2SMS Dashboard</a></li>
+                    <li>All processing happens in your browser - your data stays private</li>
+                </ul>
+            </div>
+        </div>
+    </main>
+
+    <footer>
+        <div class="container">
+            <p>Created for M-SWASTH Team | Fast2SMS Bulk Sender v3.0 (Static)</p>
+        </div>
+    </footer>
+
+    <script src="js/templates.js"></script>
+    <script src="js/utils.js"></script>
+    <script>
+        // Load templates on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            loadTemplates();
+            setupSearch();
+        });
+
+        function loadTemplates() {
+            const tbody = document.getElementById('templatesBody');
+            const templateCount = document.getElementById('templateCount');
+
+            const templateIds = Object.keys(TEMPLATES).sort((a, b) => a - b);
+            templateCount.textContent = templateIds.length;
+
+            tbody.innerHTML = '';
+            templateIds.forEach(id => {
+                const template = TEMPLATES[id];
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td><span class="badge">${id}</span></td>
+                    <td>${template.language}</td>
+                    <td>${template.sender}</td>
+                    <td class="text-center">${template.vars}</td>
+                    <td>${template.dlt_id}</td>
+                    <td class="message-preview">${template.text.substring(0, 80)}${template.text.length > 80 ? '...' : ''}</td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+
+        function setupSearch() {
+            const searchInput = document.getElementById('searchInput');
+            const table = document.getElementById('templatesTable');
+
+            searchInput.addEventListener('keyup', function() {
+                const searchTerm = this.value.toLowerCase();
+                const rows = table.querySelectorAll('tbody tr');
+
+                rows.forEach(row => {
+                    const text = row.textContent.toLowerCase();
+                    row.style.display = text.includes(searchTerm) ? '' : 'none';
+                });
+            });
+        }
+
+        function downloadSample() {
+            const csv = generateSampleCSV();
+            downloadFile(csv, 'sample_sms_data.csv', 'text/csv');
+            showToast('Sample CSV file downloaded!', 'success');
+        }
+    </script>
+</body>
+</html>
